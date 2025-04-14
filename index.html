@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Israel Brands & Products Checker</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .search-box {
+            display: flex;
+            margin: 20px 0;
+        }
+        #search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+        }
+        #search-btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        #search-btn:hover {
+            background: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .israeli {
+            background-color: #ffdddd;
+            border-left: 5px solid #e74c3c;
+        }
+        .non-israeli {
+            background-color: #ddffdd;
+            border-left: 5px solid #2ecc71;
+        }
+        .unknown {
+            background-color: #ffffdd;
+            border-left: 5px solid #f39c12;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: #eee;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .payment-options {
+            margin-top: 20px;
+        }
+        .payment-method {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+        .payment-method h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .payment-details {
+            margin-left: 10px;
+        }
+        .payment-details p {
+            margin: 8px 0;
+        }
+        .donate-btn {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .donate-btn:hover {
+            background: #27ae60;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 10px;
+            color: #7f8c8d;
+        }
+        .qr-code {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .qr-code img {
+            width: 120px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            background: white;
+        }
+        .scan-section {
+            margin: 20px 0;
+            text-align: center;
+        }
+        #scanner-container {
+            position: relative;
+            margin: 0 auto;
+            width: 300px;
+            height: 300px;
+            border: 2px solid #3498db;
+            display: none;
+        }
+        #scanner-video {
+            width: 100%;
+            height: 100%;
+        }
+        #scan-canvas {
+            display: none;
+        }
+        #scan-btn {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #stop-scan-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+        .boycott-warning {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-align: center;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+        .manufacturer-products {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Israel Brands & Products Checker</h1>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab('checker')">Brand Checker</button>
+            <button class="tab-btn" onclick="openTab('about')">About</button>
+            <button class="tab-btn" onclick="openTab('donate')">Donate</button>
+        </div>
+        
+        <!-- Checker Tab -->
+        <div id="checker" class="tab-content active">
+            <p>Check if a brand or product is associated with Israel.</p>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Enter brand or product name">
+                <button id="search-btn">Check</button>
+            </div>
+            
+            <div class="scan-section">
+                <button id="scan-btn">Scan Barcode/QR Code</button>
+                <button id="stop-scan-btn">Stop Scanning</button>
+                <div id="scanner-container">
+                    <video id="scanner-video"></video>
+                    <canvas id="scan-canvas"></canvas>
+                </div>
+            </div>
+            
+            <div id="result" class="result"></div>
+            <div id="manufacturer-products" class="manufacturer-products" style="display: none;"></div>
+        </div>
+        
+        <!-- About Tab -->
+        <div id="about" class="tab-content">
+            <h2>About This Tool</h2>
+            <p>This website helps users identify whether a brand or product is associated with Israel. The database is manually curated and may not be exhaustive.</p>
+            <p>If you find any incorrect or missing entries, please report them for updates.</p>
+        </div>
+        
+        <!-- Donate Tab -->
+        <div id="donate" class="tab-content">
+            <h2>Support This Project</h2>
+            <p>Help us maintain and expand the database by donating. Choose your preferred payment method:</p>
+            
+            <div class="payment-options">
+                <!-- For Pakistan -->
+                <div class="payment-method">
+                    <h3>🇵🇰 Pakistan</h3>
+                    <div class="payment-details">
+                        <p><strong>EasyPaisa:</strong> 0312-XXXXXXX</p>
+                        <div class="qr-code">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Easypaisa%3A0312-XXXXXXX" alt="EasyPaisa QR">
+                        </div>
+                        <p><strong>JazzCash:</strong> 0300-XXXXXXX</p>
+                        <div class="qr-code">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=JazzCash%3A0300-XXXXXXX" alt="JazzCash QR">
+                        </div>
+                        <small>(Replace Xs with your actual number)</small>
+                    </div>
+                </div>
+
+                <!-- International -->
+                <div class="payment-method">
+                    <h3>🌍 International</h3>
+                    <div class="payment-details">
+                        <p><strong>Crypto (BTC):</strong> <code>1AbCdEfGhIjKlMnOpQrStUvWxYz</code></p>
+                        <p><strong>Crypto (ETH):</strong> <code>0x1234567890abcdef</code></p>
+                        <div class="qr-code">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=bitcoin%3A1AbCdEfGhIjKlMnOpQrStUvWxYz" alt="BTC QR">
+                        </div>
+                        <p><strong>Google Wallet:</strong> <code>your-email@gmail.com</code></p>
+                        <button class="donate-btn" onclick="window.open('https://paypal.me/yourlink')">Donate via PayPal</button>
+                    </div>
+                </div>
+
+                <!-- Bank Transfer -->
+                <div class="payment-method">
+                    <h3>🏦 Bank Transfer (SWIFT)</h3>
+                    <div class="payment-details">
+                        <p><strong>Bank Name:</strong> XYZ Bank</p>
+                        <p><strong>Account #:</strong> 123456789</p>
+                        <p><strong>SWIFT:</strong> ABCD1234</p>
+                        <p><strong>IBAN:</strong> PK36XXXX0000000000000000</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>This tool helps identify brands associated with Israel. Data may not be exhaustive.</p>
+    </footer>
+
+    <script>
+        // Complete Brand Database
+        const brandDatabase = {
+            // Procter & Gamble (Complete Product List)
+            "Procter & Gamble": {
+                isIsraeli: true,
+                investmentInfo: "Operates manufacturing facilities in Israel and invests in Israeli startups. BOYCOTT RECOMMENDED.",
+                products: [
+                    // Baby Care
+                    "Pampers", "Luvs", "Huggies (P&G licensed)",
+                    
+                    // Fabric Care
+                    "Tide", "Ariel", "Gain", "Cheer", "Downy", "Bounce", "Dreft",
+                    
+                    // Feminine Care
+                    "Always", "Tampax",
+                    
+                    // Family Care
+                    "Charmin", "Bounty", "Puffs",
+                    
+                    // Hair Care
+                    "Pantene", "Head & Shoulders", "Herbal Essences", "Old Spice", "Gillette",
+                    
+                    // Personal Cleansing
+                    "Olay", "Secret", "Safeguard", "Ivory", "Zest",
+                    
+                    // Shave Care
+                    "Gillette", "Venus", "Braun",
+                    
+                    // Oral Care
+                    "Crest", "Oral-B",
+                    
+                    // Home Care
+                    "Dawn", "Cascade", "Febreze", "Mr. Clean", "Swiffer"
+                ]
+            },
+
+            // LU and Peak Freans (Mondelez International)
+            "Mondelez International": {
+                isIsraeli: true,
+                investmentInfo: "Owns Israeli food brands and operates manufacturing plants. BOYCOTT RECOMMENDED.",
+                products: [
+                    "LU Biscuits", "Peak Freans", "Oreo", "Cadbury", "Toblerone", 
+                    "Milka", "Ritz", "Chips Ahoy", "Triscuit", "Wheat Thins",
+                    "Belvita", "Halls", "Tang", "Trident", "Dentyne"
+                ]
+            },
+
+            // Unilever (Complete Product List)
+            "Unilever": {
+                isIsraeli: true,
+                investmentInfo: "Maintains R&D centers in Israel and invests in Israeli food tech companies. BOYCOTT RECOMMENDED.",
+                products: [
+                    // Ice cream
+                    "Ben & Jerry's", "Magnum", "Wall's", "Cornetto", "Popsicle",
+                    
+                    // Tea
+                    "Lipton", "PG Tips", "Tazo", "TA",
+                    
+                    // Food products
+                    "Hellmann's", "Knorr", "Becel", "Bertolli", "Colman's", "Maille",
+                    
+                    // Personal care
+                    "Dove", "Axe", "Rexona", "Sure", "Vaseline", "Ponds", "Simple",
+                    
+                    // Home care
+                    "Omo", "Persil", "Surf", "Sunlight", "Cif", "Domestos"
+                ]
+            },
+
+            // The Coca-Cola Company (Complete Product List)
+            "The Coca-Cola Company": {
+                isIsraeli: true,
+                investmentInfo: "Operates bottling plants in Israel and supports Israeli economic development programs. BOYCOTT RECOMMENDED.",
+                products: [
+                    "Coca-Cola", "Coca-Cola Zero Sugar", "Coca-Cola Light", "Coca-Cola Life", 
+                    "Coca-Cola Cherry", "Coca-Cola Vanilla", "Sprite", "Fanta", "Fresca", 
+                    "Schweppes", "Minute Maid", "Simply Beverages", "Del Valle", "Innocent Drinks",
+                    "Fairlife", "Smartwater", "Vitaminwater", "Monster Energy", "NOS", 
+                    "Full Throttle", "Gold Peak", "Honest Tea", "Peace Tea", "Dasani"
+                ]
+            },
+
+            // Colgate-Palmolive (Complete Product List)
+            "Colgate-Palmolive": {
+                isIsraeli: true,
+                investmentInfo: "Manufactures products in Israel and supports Israeli institutions. BOYCOTT RECOMMENDED.",
+                products: [
+                    "Colgate", "Palmolive", "Speed Stick", "Lady Speed Stick", "Softsoap",
+                    "Irish Spring", "Protex", "Sanex", "Elmex", "Mennen", "Ajax",
+                    "Fabuloso", "Suavitel", "Murphy Oil Soap", "Hills Pet Nutrition"
+                ]
+            },
+
+            // Mars (Complete Product List)
+            "Mars": {
+                isIsraeli: true,
+                investmentInfo: "Operates in Israel and sources ingredients from Israeli settlements. BOYCOTT RECOMMENDED.",
+                products: [
+                    "M&M's", "Snickers", "Twix", "Milky Way", "Bounty", "Mars", 
+                    "Skittles", "Starburst", "Dove Chocolate", "Galaxy", "Balisto",
+                    "Celebrations", "Combos", "Ethel M", "Flipz", "Kudos",
+                    "Pedigree", "Whiskas", "Royal Canin", "Iams", "Nutro", "Sheba"
+                ]
+            },
+
+            // Kraft Heinz (Complete Product List)
+            "Kraft Heinz": {
+                isIsraeli: true,
+                investmentInfo: "Invests in Israeli food technology and operates in Israel. BOYCOTT RECOMMENDED.",
+                products: [
+                    "Heinz Ketchup", "Heinz Beans", "Heinz Soup", "Kraft Mac & Cheese",
+                    "Kraft Singles", "Kraft Mayo", "Kraft Salad Dressing", "Philadelphia",
+                    "Oscar Mayer", "Lunchables", "Velveeta", "Planters", "Jell-O",
+                    "Cool Whip", "Kool-Aid", "Capri Sun", "Lea & Perrins", "HP Sauce"
+                ]
+            },
+
+            // Nestlé (Complete Product List)
+            "Nestlé": {
+                isIsraeli: true,
+                investmentInfo: "Major investments in Israel including R&D centers. BOYCOTT RECOMMENDED.",
+                products: [
+                    "Nescafé", "Nespresso", "Starbucks (packaged products)", "Taster's Choice",
+                    "Pure Life", "Perrier", "San Pellegrino", "Carnation", "Coffee-Mate",
+                    "Nido", "Nesquik", "KitKat", "Crunch", "Butterfinger", "Baby Ruth",
+                    "Toll House", "Smarties", "DiGiorno", "Hot Pockets", "Lean Cuisine",
+                    "Purina", "Friskies", "Fancy Feast", "Gerber", "Maggi", "Wonka"
+                ]
+            },
+
+            // Danone (Complete Product List)
+            "Danone": {
+                isIsraeli: true,
+                investmentInfo: "Operates dairy plants in Israel and invests in Israeli food tech. BOYCOTT RECOMMENDED.",
+                products: [
+                    "Activia", "DanActive", "Danimals", "Oikos", "Light & Fit",
+                    "Two Good", "YoCrunch", "Silk", "So Delicious", "Vega",
+                    "Alpro", "Provamel", "Horizon Organic", "International Delight",
+                    "Evian", "Volvic", "Aqua", "Bonafont", "Font Vella"
+                ]
+            },
+
+            // General Mills (Complete Product List)
+            "General Mills": {
+                isIsraeli: true,
+                investmentInfo: "Partners with Israeli food companies and sources ingredients from Israel. BOYCOTT RECOMMENDED.",
+                products: [
+                    "Cheerios", "Lucky Charms", "Cinnamon Toast Crunch", "Honey Nut Cheerios",
+                    "Wheaties", "Total", "Fiber One", "Nature Valley", "Häagen-Dazs",
+                    "Betty Crocker", "Pillsbury", "Old El Paso", "Progresso", "Yoplait",
+                    "Annie's", "Blue Buffalo", "Epic", "Lärabar", "Food Should Taste Good"
+                ]
+            },
+
+            // Associated British Foods (Complete Product List)
+            "Associated British Foods": {
+                isIsraeli: true,
+                investmentInfo: "Owns Israeli food brands and operates in Israel. BOYCOTT RECOMMENDED.",
+                products: [
+                    "Primark", "Twinings", "Ovaltine", "Ryvita", "Jordans", "Patak's",
+                    "Kingsmill", "Allinson", "Sunblest", "Burgen", "Silverspoon", "AB Sugar",
+                    "British Sugar", "Illovo Sugar", "Mazola", "Truvia"
+                ]
+            }
+        };
+
+        // QR/Barcode Scanner
+        const scanBtn = document.getElementById('scan-btn');
+        const stopScanBtn = document.getElementById('stop-scan-btn');
+        const scannerContainer = document.getElementById('scanner-container');
+        const video = document.getElementById('scanner-video');
+        const canvas = document.getElementById('scan-canvas');
+        const ctx = canvas.getContext('2d');
+        let scannerActive = false;
+        let stream = null;
+
+        scanBtn.addEventListener('click', startScanner);
+        stopScanBtn.addEventListener('click', stopScanner);
+
+        function startScanner() {
+            scannerContainer.style.display = 'block';
+            scanBtn.style.display = 'none';
+            stopScanBtn.style.display = 'inline-block';
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(s) {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.play();
+                    scannerActive = true;
+                    scanFrame();
+                })
+                .catch(function(err) {
+                    console.error("Error accessing camera: ", err);
+                    alert("Could not access camera. Please ensure you've granted camera permissions.");
+                    stopScanner();
+                });
+        }
+
+        function stopScanner() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            scannerContainer.style.display = 'none';
+            scanBtn.style.display = 'inline-block';
+            stopScanBtn.style.display = 'none';
+            scannerActive = false;
+        }
+
+        function scanFrame() {
+            if (!scannerActive) return;
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    document.getElementById('search-input').value = code.data;
+                    searchBrand();
+                    stopScanner();
+                }
+            }
+            
+            requestAnimationFrame(scanFrame);
+        }
+
+        // Search function
+        document.getElementById("search-btn").addEventListener("click", searchBrand);
+        document.getElementById("search-input").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") searchBrand();
+        });
+
+        function searchBrand() {
+            const searchTerm = document.getElementById("search-input").value.trim();
+            const resultDiv = document.getElementById("result");
+            const productsDiv = document.getElementById("manufacturer-products");
+            
+            if (!searchTerm) {
+                alert("Please enter a brand or product name.");
+                return;
+            }
+            
+            // Reset display
+            productsDiv.style.display = "none";
+            productsDiv.innerHTML = "";
+            
+            // Check for manufacturer
+            const manufacturer = Object.keys(brandDatabase).find(key => 
+                key.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            // Check for product
+            let productMatch = null;
+            for (const [brand, data] of Object.entries(brandDatabase)) {
+                if (data.products) {
+                    const product = data.products.find(p => 
+                        p.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                    if (product) {
+                        productMatch = { brand, product, ...data };
+                        break;
+                    }
+                }
+            }
+            
+            if (manufacturer && brandDatabase[manufacturer]) {
+                const brandData = brandDatabase[manufacturer];
+                
+                if (brandData.products) {
+                    // Show manufacturer and all products
+                    resultDiv.innerHTML = `
+                        <h3>${manufacturer}</h3>
+                        <p>This manufacturer is <strong>${brandData.isIsraeli ? "Israeli" : "not Israeli"}</strong>.</p>
+                        ${brandData.isIsraeli ? `<div class="boycott-warning">BOYCOTT</div>` : ''}
+                        ${brandData.investmentInfo ? `<p><strong>Israel Investments:</strong> ${brandData.investmentInfo}</p>` : ''}
+                    `;
+                    resultDiv.className = "result " + (brandData.isIsraeli ? "israeli" : "non-israeli");
+                    
+                    // Show all products
+                    productsDiv.style.display = "block";
+                    productsDiv.innerHTML = `
+                        <h4>All Products by ${manufacturer}:</h4>
+                        <ul>
+                            ${brandData.products.map(p => `<li>${p} ${brandData.isIsraeli ? '<span style="color:red">(BOYCOTT)</span>' : ''}</li>`).join('')}
+                        </ul>
+                    `;
+                } else {
+                    // Single brand
+                    resultDiv.innerHTML = `
+                        <h3>${manufacturer}</h3>
+                        <p>This brand is <strong>${brandData.isIsraeli ? "Israeli" : "not Israeli"}</strong>.</p>
+                        ${brandData.isIsraeli ? `<div class="boycott-warning">BOYCOTT</div>` : ''}
+                        ${brandData.investmentInfo ? `<p><strong>Israel Investments:</strong> ${brandData.investmentInfo}</p>` : ''}
+                    `;
+                    resultDiv.className = "result " + (brandData.isIsraeli ? "israeli" : "non-israeli");
+                }
+            } 
+            else if (productMatch) {
+                // Product match
+                resultDiv.innerHTML = `
+                    <h3>${productMatch.product}</h3>
+                    <p>This product is from <strong>${productMatch.brand}</strong> which is <strong>${productMatch.isIsraeli ? "Israeli" : "not Israeli"}</strong>.</p>
+                    ${productMatch.isIsraeli ? `<div class="boycott-warning">BOYCOTT</div>` : ''}
+                    ${productMatch.investmentInfo ? `<p><strong>Israel Investments:</strong> ${productMatch.investmentInfo}</p>` : ''}
+                `;
+                resultDiv.className = "result " + (productMatch.isIsraeli ? "israeli" : "non-israeli");
+            }
+            else {
+                // No match found
+                resultDiv.innerHTML = `
+                    <h3>${searchTerm}</h3>
+                    <p>No information available. This brand may or may not be associated with Israel.</p>
+                `;
+                resultDiv.className = "result unknown";
+            }
+            
+            resultDiv.style.display = "block";
+        }
+
+        // Tab functionality
+        function openTab(tabName) {
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            const tabButtons = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            event.currentTarget.classList.add("active");
+        }
+    </script>
+	<script src="israeliBrandsDb.js"></script>
+</body>
+</html>
